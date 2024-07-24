@@ -11,8 +11,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-admin_id = 1252047562  # Anton
+# admin_id = 1252047562  # Anton
 # admin_id = 1442538115  # Uliana
+admin_id = -1002221085325  # channel
+admin_list = [1252047562, 1442538115, -1002221085325]
 password = "1111"
 
 
@@ -26,7 +28,12 @@ def reply_photo(update: telegram.update.Update, context: telegram.ext.callbackco
     # update.message.reply_photo(i.file_id)
     # obj = context.bot.get_file(i.file_id)
     # obj.download()
-    update.message.reply_text(f"Photos are successfully sent\n(Фото успешно отправлено)")
+    update.message.reply_text(f"Photo is successfully sent\n(Фото успешно отправлено)")
+
+
+def reply_all(update: telegram.update.Update, context: telegram.ext.callbackcontext.CallbackContext):
+    context.bot.forward_message(admin_id, update.message.from_user.id, update.message.message_id)
+    update.message.reply_text(f"Message is successfully sent\n(Сообщение успешно отправлено)")
 
 
 def reply_video(update: telegram.update.Update, context: telegram.ext.callbackcontext.CallbackContext):
@@ -37,11 +44,7 @@ def reply_video(update: telegram.update.Update, context: telegram.ext.callbackco
     update.message.reply_text("Video successfully sent\n(Видео успешно отправлено)")
 
 
-def reply_text(update: telegram.update.Update, context: telegram.ext.callbackcontext.CallbackContext):
-    pass
-
-
-def get_password(text, cnt=2):
+def get_new_password(text, cnt=2):
     if len(text.split()) != cnt:
         raise MyException("Invalid number of arguments\n(Неверное количество аргументов)")
     if len(text.split()) == 3:
@@ -73,7 +76,7 @@ def set_admin(update: telegram.update.Update, context: telegram.ext.callbackcont
 
 def set_password(update: telegram.update.Update, context: telegram.ext.callbackcontext.CallbackContext):
     try:
-        new_one = get_password(update.message.text, cnt=3)
+        new_one = get_new_password(update.message.text, cnt=3)
     except Exception as e:
         update.message.reply_text(str(e))
         return
@@ -95,8 +98,25 @@ def get_password(update: telegram.update.Update, context: telegram.ext.callbackc
     update.message.reply_text(f"Password is: {password}")
 
 
+def help_admin(update: telegram.update.Update, context: telegram.ext.callbackcontext.CallbackContext):
+    pass
+
+
 def help(update: telegram.update.Update, context: telegram.ext.callbackcontext.CallbackContext):
-    update.message.reply_text("Sorry, this part is not done yet.\n\nИзвините, эта часть бота пока не работает.")
+    if update.message.from_user.id in admin_list:
+        help_admin(update, context)
+
+    update.message.reply_text(
+        "Отправляйте фото/видео (или другое), которые вы хотите увидеть в конце смене или других мероприятиях. Для удобства поиска можете пользоваться хештегами (нам будет гораздо проще):\n"
+        "#пример - пример хештега\n"
+        "#летка2024 - летняя многопрофильная смена 2024\n\n"
+        "Также, вы можете писать любой текст к фото/видео, если он нужен (или вы хотите дополнить ситуацию, например)\n"
+        "Имейте ввиду, если у вас закрытый аккаунт, ты мы не сможем вам ответить =)\n\nПо остальным вопросам обращайтесь к:\n"
+        "@chuchmella @MrAnt1vit")
+
+
+def start(update: telegram.update.Update, context: telegram.ext.callbackcontext.CallbackContext):
+    help(update, context)
 
 
 def admin_help():
@@ -107,13 +127,15 @@ def main():
     bot = Updater(TOKEN)
     disp: telegram.ext.updater.Dispatcher = bot.dispatcher
 
-    disp.add_handler(MessageHandler(Filters.photo, reply_photo))
-    disp.add_handler(MessageHandler(Filters.video, reply_video))
-    disp.add_handler(CommandHandler("set_admin", set_admin))
-    disp.add_handler(CommandHandler("set_password", set_password))
-    disp.add_handler(CommandHandler("get_password", get_password))
+    # disp.add_handler(MessageHandler(Filters.photo, reply_photo))
+    # disp.add_handler(MessageHandler(Filters.video, reply_video))
+    # disp.add_handler(CommandHandler("set_admin", set_admin))
+    # disp.add_handler(CommandHandler("set_password", set_password))
+    # disp.add_handler(CommandHandler("get_password", get_password))
+    disp.add_handler(CommandHandler("start", start))
     disp.add_handler(CommandHandler("help", help))
-    disp.add_handler(MessageHandler(Filters.text, reply_text))
+    # disp.add_handler(MessageHandler(Filters.text, reply_text))
+    disp.add_handler(MessageHandler(Filters.all, reply_all))
 
     bot.start_polling()
     bot.idle()
